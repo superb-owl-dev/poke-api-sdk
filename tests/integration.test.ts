@@ -1,9 +1,6 @@
 import { PokeAPIClient } from '../src/client';
-import { Pokemon } from '../src/types/pokemon';
-import { Berry } from '../src/types/berries';
-import { Item } from '../src/types/items';
 
-interface PaginatedResponse<T> {
+interface PaginatedResponse {
     count: number;
     next: string | null;
     previous: string | null;
@@ -41,7 +38,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list Pokemon with pagination', async () => {
-            const response = await client.listPokemon(5, 0) as PaginatedResponse<Pokemon>;
+            const response = await client.listPokemon(5, 0) as PaginatedResponse;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -60,7 +57,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list berries with pagination', async () => {
-            const response = await client.listBerries(5, 0) as PaginatedResponse<Berry>;
+            const response = await client.listBerries(5, 0) as PaginatedResponse;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -77,7 +74,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list items with pagination', async () => {
-            const response = await client.listItems(5, 0) as PaginatedResponse<Item>;
+            const response = await client.listItems(5, 0) as PaginatedResponse;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -113,7 +110,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list locations with pagination', async () => {
-            const response = await client.listLocations(5, 0);
+            const response = await client.listLocations(5, 0) as PaginatedResponse;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -138,7 +135,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list moves with pagination', async () => {
-            const response = await client.listMoves(5, 0);
+            const response = await client.listMoves(5, 0) as PaginatedResponse;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -147,14 +144,14 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Pagination Edge Cases', () => {
         it('should handle requesting beyond available results', async () => {
-            const response = await client.listPokemon(10, 100000);
+            const response = await client.listPokemon(10, 100000) as PaginatedResponse;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(0);
             expect(response.next).toBeNull();
         });
 
         it('should handle maximum allowed limit', async () => {
-            const response = await client.listPokemon(100, 0);
+            const response = await client.listPokemon(100, 0) as PaginatedResponse;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(100);
         });
