@@ -1,14 +1,5 @@
-import { PokeAPIClient } from '../src/client';
-
-interface PaginatedResponse {
-    count: number;
-    next: string | null;
-    previous: string | null;
-    results: Array<{
-        name: string;
-        url: string;
-    }>;
-}
+import { PokeAPIClient, PaginatedResponse, NamedAPIResource } from '../src/client';
+import { Pokemon } from '../src/types/pokemon';
 
 // Extend the default Jest timeout since we're making real API calls
 jest.setTimeout(30000);
@@ -38,7 +29,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list Pokemon with pagination', async () => {
-            const response = await client.listPokemon(5, 0) as PaginatedResponse;
+            const response = await client.listPokemon(5, 0);
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -57,7 +48,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list berries with pagination', async () => {
-            const response = await client.listBerries(5, 0) as PaginatedResponse;
+            const response = await client.listBerries(5, 0) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -74,7 +65,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list items with pagination', async () => {
-            const response = await client.listItems(5, 0) as PaginatedResponse;
+            const response = await client.listItems(5, 0) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -110,7 +101,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list locations with pagination', async () => {
-            const response = await client.listLocations(5, 0) as PaginatedResponse;
+            const response = await client.listLocations(5, 0) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -135,7 +126,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list moves with pagination', async () => {
-            const response = await client.listMoves(5, 0) as PaginatedResponse;
+            const response = await client.listMoves(5, 0) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -144,14 +135,14 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Pagination Edge Cases', () => {
         it('should handle requesting beyond available results', async () => {
-            const response = await client.listPokemon(10, 100000) as PaginatedResponse;
+            const response = await client.listPokemon(10, 100000) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(0);
             expect(response.next).toBeNull();
         });
 
         it('should handle maximum allowed limit', async () => {
-            const response = await client.listPokemon(100, 0) as PaginatedResponse;
+            const response = await client.listPokemon(100, 0) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(100);
         });
@@ -224,6 +215,106 @@ describe('PokeAPI SDK Integration Tests', () => {
             await expect(client.listPokemon(-1, -1))
                 .resolves
                 .toBeDefined(); // The API actually handles this gracefully with defaults
+        });
+    });
+
+    describe('Caching Behavior', () => {
+        it('should cache responses and return cached data on subsequent calls', async () => {
+            const start = Date.now();
+            const firstCall = await client.getPokemon('pikachu');
+            const firstCallTime = Date.now() - start;
+
+            const secondStart = Date.now();
+            const secondCall = await client.getPokemon('pikachu');
+            const secondCallTime = Date.now() - secondStart;
+
+            expect(secondCallTime).toBeLessThan(firstCallTime);
+            expect(secondCall).toEqual(firstCall);
+        });
+
+        it('should return fresh data when cache is bypassed', async () => {
+            const firstCall = await client.getPokemon('pikachu');
+            const clientWithoutCache = new PokeAPIClient({ cacheEnabled: false });
+            const secondCall = await clientWithoutCache.getPokemon('pikachu');
+            
+            expect(secondCall).toEqual(firstCall);
+        });
+    });
+
+    describe('Advanced Search Functionality', () => {
+        it('should search pokemon by partial name match', async () => {
+            const results = await client.searchPokemon('char');
+            expect(results).toBeDefined();
+            expect(Array.isArray(results)).toBe(true);
+            expect(results.length).toBeGreaterThan(0);
+            expect(results.some((p: Pokemon) => p.name === 'charizard')).toBe(true);
+            expect(results.some((p: Pokemon) => p.name === 'charmeleon')).toBe(true);
+        });
+
+        it('should handle case-insensitive search', async () => {
+            const lowerCase = await client.searchPokemon('pikachu');
+            const upperCase = await client.searchPokemon('PIKACHU');
+            const mixedCase = await client.searchPokemon('PiKaChU');
+
+            expect(lowerCase[0].id).toBe(25);
+            expect(upperCase[0].id).toBe(25);
+            expect(mixedCase[0].id).toBe(25);
+        });
+
+        it('should return empty array for no matches', async () => {
+            const results = await client.searchPokemon('definitely-not-a-pokemon');
+            expect(results).toEqual([]);
+        });
+    });
+
+    describe('Bulk Operations & Resource Resolution', () => {
+        it('should fetch multiple Pokemon in parallel', async () => {
+            const pokemonIds = [1, 4, 7]; // Bulbasaur, Charmander, Squirtle
+            const results = await Promise.all(pokemonIds.map(id => client.getPokemon(id)));
+            
+            expect(results).toHaveLength(3);
+            expect(results[0].name).toBe('bulbasaur');
+            expect(results[1].name).toBe('charmander');
+            expect(results[2].name).toBe('squirtle');
+        });
+
+        it('should resolve all nested resources for a Pokemon', async () => {
+            const pokemon = await client.getPokemon('dragonite');
+            
+            // Check that all major nested resources are resolved
+            expect(pokemon.abilities).toBeDefined();
+            expect(pokemon.moves).toBeDefined();
+            expect(pokemon.types).toBeDefined();
+            expect(pokemon.stats).toBeDefined();
+            
+            // Verify nested resource structure
+            if (pokemon.abilities.length > 0) {
+                const ability = pokemon.abilities[0];
+                expect(ability.ability.name).toBeDefined();
+                expect(ability.is_hidden).toBeDefined();
+                expect(ability.slot).toBeDefined();
+            }
+            
+            if (pokemon.moves.length > 0) {
+                const move = pokemon.moves[0];
+                expect(move.move.name).toBeDefined();
+                expect(move.version_group_details).toBeDefined();
+            }
+        });
+
+        it('should handle bulk pagination requests efficiently', async () => {
+            const allResults: NamedAPIResource[] = [];
+            let response = await client.listPokemon(50, 0);
+            allResults.push(...response.results);
+            
+            if (response.next) {
+                response = await client.listPokemon(50, 50);
+                allResults.push(...response.results);
+            }
+            
+            expect(allResults.length).toBe(100);
+            expect(allResults[0].name).toBeDefined();
+            expect(allResults[99].name).toBeDefined();
         });
     });
 });
