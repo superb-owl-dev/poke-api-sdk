@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Build outputs
+/lib
+/*.tgz
+
+# Testing
+/coverage
+
+# TypeScript
+*.tsbuildinfo
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+
+# npm cache
+.npm
+
+# eslint cache
+.eslintcache
