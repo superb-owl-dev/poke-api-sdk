@@ -1,0 +1,30 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "name": "@superb-owl-dev/poke-api-sdk",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "theme": "default",
+  "includeVersion": true,
+  "categorizeByGroup": true,
+  "searchInComments": true,
+  "navigationLinks": {
+    "Docs": "./",
+    "GitHub": "https://github.com/superb-owl-dev/poke-api-sdk",
+    "PokéAPI": "https://pokeapi.co/"
+  },
+  "categoryOrder": [
+    "Pokemon",
+    "Items",
+    "Moves",
+    "Locations",
+    "Berries",
+    "*"
+  ],
+  "sort": ["source-order"],
+  "validation": {
+    "invalidLink": true,
+    "notDocumented": false
+  }
+}
