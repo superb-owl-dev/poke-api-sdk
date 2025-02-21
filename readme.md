@@ -53,7 +53,7 @@ This SDK provides several quality-of-life improvements over using the vanilla Po
 ## Installation
 
 ```bash
-npm install @superb-owl-dev/poke-api-sdk
+npm install https://github.com/superb-owl-dev/poke-api-sdk
 ```
 
 ## Quick Start
