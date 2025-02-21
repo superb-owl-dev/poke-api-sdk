@@ -15,6 +15,41 @@ A fully-typed TypeScript SDK for the PokéAPI (pokeapi.co), providing an elegant
 - 🔍 Exact and partial name matching for Pokemon search
 - 🎮 Full coverage of PokéAPI endpoints
 
+## Improvements Over Vanilla API
+This SDK provides several quality-of-life improvements over using the vanilla PokéAPI directly:
+
+### 1. Built-in Caching
+- Automatic in-memory caching of API responses with a 1-hour TTL
+- Configurable cache behavior (can be enabled/disabled)
+- Helps reduce API calls and improve application performance
+- Respects the PokéAPI's fair use policy by minimizing duplicate requests
+
+### 2. Smart Pagination
+- `fetchAll` option to automatically handle pagination and retrieve all results
+- Automatically optimizes page size (100 items per request) when fetching all results
+- Simplified pagination interface with limit/offset parameters
+
+### 3. Enhanced Search Capabilities
+- Intelligent Pokemon search that tries exact match first, then falls back to partial matching
+- Search across Pokemon names with case-insensitive matching
+- Returns full Pokemon details instead of just resource URLs
+
+### 4. Type Safety
+- Full TypeScript definitions for all API responses
+- Compile-time type checking for parameters and responses
+- IDE autocompletion support for all methods and properties
+
+### 5. Convenience Methods
+- `getPokemonsByGeneration`: Get all Pokemon from a specific generation in one call
+- Combined endpoints that handle multiple API calls automatically
+- Simplified resource access with uniform method signatures
+
+### 6. Error Handling
+- Detailed error messages and proper error typing
+- Automatic retry on network failures
+- Timeout handling with configurable duration
+- Proper error propagation with API-specific error details
+
 ## Installation
 
 ```bash
