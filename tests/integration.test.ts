@@ -5,15 +5,15 @@ import { Pokemon } from '../src/types/pokemon';
 jest.setTimeout(30000);
 
 describe('PokeAPI SDK Integration Tests', () => {
-    let client: PokeAPIClient;
+    let pokedex: PokeAPIClient;
 
     beforeEach(() => {
-        client = new PokeAPIClient();
+        pokedex = new PokeAPIClient();
     });
 
     describe('Pokemon Endpoints', () => {
         it('should fetch Pikachu by name', async () => {
-            const pokemon = await client.getPokemon('pikachu');
+            const pokemon = await pokedex.getPokemon('pikachu');
             expect(pokemon).toBeDefined();
             expect(pokemon.name).toBe('pikachu');
             expect(pokemon.id).toBe(25);
@@ -22,14 +22,14 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should fetch Pokemon #1 by ID', async () => {
-            const pokemon = await client.getPokemon(1);
+            const pokemon = await pokedex.getPokemon(1);
             expect(pokemon).toBeDefined();
             expect(pokemon.name).toBe('bulbasaur');
             expect(pokemon.id).toBe(1);
         });
 
         it('should list Pokemon with pagination', async () => {
-            const response = await client.listPokemon(5, 0);
+            const response = await pokedex.listPokemon({ limit: 5, offset: 0 });
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -40,7 +40,7 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Berry Endpoints', () => {
         it('should fetch a berry by name', async () => {
-            const berry = await client.getBerry('cheri');
+            const berry = await pokedex.getBerry('cheri');
             expect(berry).toBeDefined();
             expect(berry.name).toBe('cheri');
             expect(berry.growth_time).toBeDefined();
@@ -48,7 +48,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list berries with pagination', async () => {
-            const response = await client.listBerries(5, 0) as PaginatedResponse<NamedAPIResource>;
+            const response = await pokedex.listBerries({ limit: 5, offset: 0 }) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -57,7 +57,7 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Item Endpoints', () => {
         it('should fetch an item by name', async () => {
-            const item = await client.getItem('master-ball');
+            const item = await pokedex.getItem('master-ball');
             expect(item).toBeDefined();
             expect(item.name).toBe('master-ball');
             expect(item.cost).toBeDefined();
@@ -65,7 +65,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should list items with pagination', async () => {
-            const response = await client.listItems(5, 0) as PaginatedResponse<NamedAPIResource>;
+            const response = await pokedex.listItems({ limit: 5, offset: 0 }) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -74,7 +74,7 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Pokemon Encounters', () => {
         it('should fetch encounter locations for a Pokemon', async () => {
-            const encounters = await client.getPokemonEncounters(25); // Pikachu
+            const encounters = await pokedex.getPokemonEncounters(25); // Pikachu
             expect(encounters).toBeDefined();
             expect(Array.isArray(encounters)).toBe(true);
             if (encounters.length > 0) {
@@ -86,7 +86,7 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Location Endpoints', () => {
         it('should fetch a location by name', async () => {
-            const location = await client.getLocation('celadon-city');
+            const location = await pokedex.getLocation('celadon-city');
             expect(location).toBeDefined();
             expect(location.name).toBe('celadon-city');
             expect(location.region).toBeDefined();
@@ -94,14 +94,14 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should fetch a location area by id', async () => {
-            const area = await client.getLocationArea(1);
+            const area = await pokedex.getLocationArea(1);
             expect(area).toBeDefined();
             expect(area.pokemon_encounters).toBeDefined();
             expect(Array.isArray(area.pokemon_encounters)).toBe(true);
         });
 
         it('should list locations with pagination', async () => {
-            const response = await client.listLocations(5, 0) as PaginatedResponse<NamedAPIResource>;
+            const response = await pokedex.listLocations({ limit: 5, offset: 0 }) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -110,7 +110,7 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Move Endpoints', () => {
         it('should fetch a move by name', async () => {
-            const move = await client.getMove('thunderbolt');
+            const move = await pokedex.getMove('thunderbolt');
             expect(move).toBeDefined();
             expect(move.name).toBe('thunderbolt');
             expect(move.power).toBeDefined();
@@ -119,14 +119,14 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should fetch move metadata', async () => {
-            const ailment = await client.getMoveAilment('paralysis');
+            const ailment = await pokedex.getMoveAilment('paralysis');
             expect(ailment).toBeDefined();
             expect(ailment.name).toBe('paralysis');
             expect(ailment.moves).toBeDefined();
         });
 
         it('should list moves with pagination', async () => {
-            const response = await client.listMoves(5, 0) as PaginatedResponse<NamedAPIResource>;
+            const response = await pokedex.listMoves({ limit: 5, offset: 0 }) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(5);
             expect(response.count).toBeGreaterThan(0);
@@ -135,14 +135,14 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Pagination Edge Cases', () => {
         it('should handle requesting beyond available results', async () => {
-            const response = await client.listPokemon(10, 100000) as PaginatedResponse<NamedAPIResource>;
+            const response = await pokedex.listPokemon({ limit: 10, offset: 100000 }) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(0);
             expect(response.next).toBeNull();
         });
 
         it('should handle maximum allowed limit', async () => {
-            const response = await client.listPokemon(100, 0) as PaginatedResponse<NamedAPIResource>;
+            const response = await pokedex.listPokemon({ limit: 100, offset: 0 }) as PaginatedResponse<NamedAPIResource>;
             expect(response.results).toBeDefined();
             expect(response.results.length).toBe(100);
         });
@@ -150,7 +150,7 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Resource Resolution', () => {
         it('should fetch Pokemon with all nested resources', async () => {
-            const pokemon = await client.getPokemon('charizard');
+            const pokemon = await pokedex.getPokemon('charizard');
             expect(pokemon.abilities).toBeDefined();
             expect(pokemon.moves).toBeDefined();
             expect(pokemon.sprites).toBeDefined();
@@ -169,7 +169,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should handle Pokemon with form variations', async () => {
-            const pokemon = await client.getPokemon('giratina-altered');
+            const pokemon = await pokedex.getPokemon('giratina-altered');
             expect(pokemon).toBeDefined();
             expect(pokemon.name).toBe('giratina-altered');
             expect(pokemon.forms).toBeDefined();
@@ -178,7 +178,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should handle non-existent form variations gracefully', async () => {
-            await expect(client.getPokemon('giratina-nonexistent'))
+            await expect(pokedex.getPokemon('giratina-nonexistent'))
                 .rejects
                 .toThrow();
         });
@@ -186,13 +186,13 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Error Handling', () => {
         it('should handle non-existent Pokemon gracefully', async () => {
-            await expect(client.getPokemon('nonexistent-pokemon'))
+            await expect(pokedex.getPokemon('nonexistent-pokemon'))
                 .rejects
                 .toThrow();
         });
 
         it('should handle invalid IDs gracefully', async () => {
-            await expect(client.getPokemon(-1))
+            await expect(pokedex.getPokemon(-1))
                 .rejects
                 .toThrow();
         });
@@ -212,7 +212,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should handle invalid pagination parameters', async () => {
-            await expect(client.listPokemon(-1, -1))
+            await expect(pokedex.listPokemon({ limit: -1, offset: -1 }))
                 .resolves
                 .toBeDefined(); // The API actually handles this gracefully with defaults
         });
@@ -221,11 +221,11 @@ describe('PokeAPI SDK Integration Tests', () => {
     describe('Caching Behavior', () => {
         it('should cache responses and return cached data on subsequent calls', async () => {
             const start = Date.now();
-            const firstCall = await client.getPokemon('pikachu');
+            const firstCall = await pokedex.getPokemon('pikachu');
             const firstCallTime = Date.now() - start;
 
             const secondStart = Date.now();
-            const secondCall = await client.getPokemon('pikachu');
+            const secondCall = await pokedex.getPokemon('pikachu');
             const secondCallTime = Date.now() - secondStart;
 
             expect(secondCallTime).toBeLessThan(firstCallTime);
@@ -233,7 +233,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should return fresh data when cache is bypassed', async () => {
-            const firstCall = await client.getPokemon('pikachu');
+            const firstCall = await pokedex.getPokemon('pikachu');
             const clientWithoutCache = new PokeAPIClient({ cacheEnabled: false });
             const secondCall = await clientWithoutCache.getPokemon('pikachu');
             
@@ -243,7 +243,7 @@ describe('PokeAPI SDK Integration Tests', () => {
 
     describe('Advanced Search Functionality', () => {
         it('should search pokemon by partial name match', async () => {
-            const results = await client.searchPokemon('char');
+            const results = await pokedex.searchPokemon('char');
             expect(results).toBeDefined();
             expect(Array.isArray(results)).toBe(true);
             expect(results.length).toBeGreaterThan(0);
@@ -252,9 +252,9 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should handle case-insensitive search', async () => {
-            const lowerCase = await client.searchPokemon('pikachu');
-            const upperCase = await client.searchPokemon('PIKACHU');
-            const mixedCase = await client.searchPokemon('PiKaChU');
+            const lowerCase = await pokedex.searchPokemon('pikachu');
+            const upperCase = await pokedex.searchPokemon('PIKACHU');
+            const mixedCase = await pokedex.searchPokemon('PiKaChU');
 
             expect(lowerCase[0].id).toBe(25);
             expect(upperCase[0].id).toBe(25);
@@ -262,7 +262,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should return empty array for no matches', async () => {
-            const results = await client.searchPokemon('definitely-not-a-pokemon');
+            const results = await pokedex.searchPokemon('definitely-not-a-pokemon');
             expect(results).toEqual([]);
         });
     });
@@ -270,7 +270,7 @@ describe('PokeAPI SDK Integration Tests', () => {
     describe('Bulk Operations & Resource Resolution', () => {
         it('should fetch multiple Pokemon in parallel', async () => {
             const pokemonIds = [1, 4, 7]; // Bulbasaur, Charmander, Squirtle
-            const results = await Promise.all(pokemonIds.map(id => client.getPokemon(id)));
+            const results = await Promise.all(pokemonIds.map(id => pokedex.getPokemon(id)));
             
             expect(results).toHaveLength(3);
             expect(results[0].name).toBe('bulbasaur');
@@ -279,7 +279,7 @@ describe('PokeAPI SDK Integration Tests', () => {
         });
 
         it('should resolve all nested resources for a Pokemon', async () => {
-            const pokemon = await client.getPokemon('dragonite');
+            const pokemon = await pokedex.getPokemon('dragonite');
             
             // Check that all major nested resources are resolved
             expect(pokemon.abilities).toBeDefined();
@@ -304,17 +304,62 @@ describe('PokeAPI SDK Integration Tests', () => {
 
         it('should handle bulk pagination requests efficiently', async () => {
             const allResults: NamedAPIResource[] = [];
-            let response = await client.listPokemon(50, 0);
+            let response = await pokedex.listPokemon({ limit: 50, offset: 0 });
             allResults.push(...response.results);
             
             if (response.next) {
-                response = await client.listPokemon(50, 50);
+                response = await pokedex.listPokemon({ limit: 50, offset: 50 });
                 allResults.push(...response.results);
             }
             
             expect(allResults.length).toBe(100);
             expect(allResults[0].name).toBeDefined();
             expect(allResults[99].name).toBeDefined();
+        });
+    });
+
+    describe('Generation Endpoints', () => {
+        it('should fetch a generation by id', async () => {
+            const generation = await pokedex.getGeneration(1);
+            expect(generation).toBeDefined();
+            expect(generation.name).toBe('generation-i');
+            expect(generation.pokemon_species).toBeDefined();
+            expect(Array.isArray(generation.pokemon_species)).toBe(true);
+        });
+
+        it('should fetch Pokemon by generation', async () => {
+            const genPokemon = await pokedex.getPokemonsByGeneration(1);
+            expect(genPokemon).toBeDefined();
+            expect(Array.isArray(genPokemon)).toBe(true);
+            if (genPokemon.length > 0) {
+                expect(genPokemon[0]).toHaveProperty('id');
+                expect(genPokemon[0]).toHaveProperty('name');
+                expect(genPokemon[0]).toHaveProperty('types');
+            }
+        });
+
+        it('should list generations with pagination', async () => {
+            const response = await pokedex.listGenerations({ limit: 5, offset: 0 });
+            expect(response.results).toBeDefined();
+            expect(response.results.length).toBe(5);
+            expect(response.count).toBeGreaterThan(0);
+        });
+    });
+
+    describe('Pagination Options', () => {
+        it('should fetch all results when fetchAll is true', async () => {
+            const response = await pokedex.listPokemon({ fetchAll: true });
+            expect(response.results.length).toEqual(response.count);
+            expect(response.next).toBeNull();
+            expect(response.previous).toBeNull();
+        });
+
+        it('should handle fetchAll with other pagination options', async () => {
+            const response = await pokedex.listPokemon({ 
+                fetchAll: true,
+                limit: 50 // This should be overridden by fetchAll using limit: 100
+            });
+            expect(response.results.length).toEqual(response.count);
         });
     });
 });

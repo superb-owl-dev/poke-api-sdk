@@ -10,39 +10,15 @@ A fully-typed TypeScript SDK for the PokéAPI (pokeapi.co), providing an elegant
 - 🔒 Type-safe responses matching the official PokéAPI schema
 - 🛠️ Built-in error handling and request timeout configuration
 - 📝 Extensive documentation with examples
-- 🔄 Automatic response transformation
+- 🔄 Smart caching for optimal performance
+- 🌐 Pagination support for listing resources
+- 🔍 Exact and partial name matching for Pokemon search
 - 🎮 Full coverage of PokéAPI endpoints
-
-## Improvements Over Native API
-
-Our SDK provides several developer-friendly abstractions over the native PokéAPI:
-
-1. **Type Safety**: Full TypeScript type definitions for all API responses, providing autocomplete and compile-time type checking.
-
-2. **Simplified Resource Access**: While the native API returns URLs for related resources that need additional fetching, our SDK methods handle resource resolution automatically.
-
-3. **Promise-Based Architecture**: All API calls return Promises and support modern async/await syntax, making it easier to handle asynchronous operations.
-
-4. **Error Handling**: Built-in error handling with descriptive error messages and proper error types, rather than raw HTTP responses.
-
-5. **Configurable Client**: A configurable client instance that allows setting custom timeouts, base URLs, and other options.
-
-6. **Pagination Handling**: Built-in support for pagination with limit and offset parameters, making it easy to fetch large sets of data.
-
-7. **Resource Caching**: The SDK implements caching strategies to comply with PokéAPI's fair use policy and improve performance.
-
-8. **Modular Design**: Resources are organized by type (Pokemon, Berries, Items, etc.) for better code organization and tree-shaking support.
-
-9. **Consistent Interface**: While the native API has varying response structures, our SDK normalizes responses for a consistent developer experience.
-
-10. **Automatic Type Transformation**: The SDK automatically handles type conversions and data normalization, reducing boilerplate code.
 
 ## Installation
 
 ```bash
 npm install @superb-owl-dev/poke-api-sdk
-# or
-yarn add @superb-owl-dev/poke-api-sdk
 ```
 
 ## Quick Start
@@ -51,158 +27,158 @@ yarn add @superb-owl-dev/poke-api-sdk
 import { PokeAPIClient } from '@superb-owl-dev/poke-api-sdk';
 
 // Initialize the client
-const client = new PokeAPIClient();
+const pokedex = new PokeAPIClient({
+  baseURL: 'https://pokeapi.co/api/v2', // Optional, this is the default
+  timeout: 10000, // Optional, defaults to 10000ms
+  cacheEnabled: true // Optional, defaults to true
+});
 
 // Get information about a specific Pokemon
 async function getPokemonInfo() {
   try {
-    const pikachu = await client.getPokemon('pikachu');
+    const pikachu = await pokedex.getPokemon('pikachu');
     console.log(pikachu.name); // 'pikachu'
     console.log(pikachu.types); // Array of types
   } catch (error) {
-    console.error('Error fetching Pokemon:', error);
+    if (error.response?.status === 404) {
+      console.error('Pokemon not found');
+    } else {
+      console.error('Error fetching Pokemon:', error);
+    }
   }
 }
 
-// List all berries with pagination
-async function listBerries() {
+// Get a paginated list of Pokemon
+async function listPokemon() {
   try {
-    const berries = await client.listBerries(20, 0); // limit: 20, offset: 0
-    console.log(berries.results); // Array of berry resources
+    const pokemon = await pokedex.listPokemon({ limit: 20, offset: 0 });
+    console.log(pokemon.results); // Array of Pokemon resources
+    
+    // Get full details for each Pokemon if needed
+    const fullDetails = await Promise.all(
+      pokemon.results.map(p => pokedex.getPokemon(p.name))
+    );
   } catch (error) {
-    console.error('Error fetching berries:', error);
+    console.error('Error listing Pokemon:', error);
   }
 }
 ```
 
 ## Available APIs
 
-The SDK provides access to all major PokéAPI endpoints including:
-
 ### Pokémon
 ```typescript
 // Get a specific Pokemon
-const pokemon = await client.getPokemon('pikachu');
+const pokemon = await pokedex.getPokemon('pikachu');
 
 // Get Pokemon encounters
-const encounters = await client.getPokemonEncounters('pikachu');
+const encounters = await pokedex.getPokemonEncounters('pikachu');
 
-// List all Pokemon (paginated)
-const pokemonList = await client.listPokemon(20, 0);
+// List Pokemon with pagination options
+const pokemonList = await pokedex.listPokemon({ 
+    limit: 20,    // Optional, default 20
+    offset: 0,    // Optional, default 0
+    fetchAll: false // Optional, default false. If true, fetches all results
+});
+
+// Search for Pokemon by name
+const searchResults = await pokedex.searchPokemon('char');
+
+// Get a specific Generation
+const gen1 = await pokedex.getGeneration(1);
+
+// Get all Pokemon from Generation 1
+const gen1Pokemon = await pokedex.getPokemonsByGeneration(1);
+
+// List all Generations
+const generations = await pokedex.listGenerations({ fetchAll: true }); // Gets all generations at once
 ```
 
 ### Berries
 ```typescript
 // Get a specific berry
-const berry = await client.getBerry('cheri');
+const berry = await pokedex.getBerry('cheri');
 
 // Get berry firmness
-const firmness = await client.getBerryFirmness('very-soft');
+const firmness = await pokedex.getBerryFirmness('very-soft');
 
-// List all berries (paginated)
-const berries = await client.listBerries(20, 0);
+// Get berry flavor
+const flavor = await pokedex.getBerryFlavor('spicy');
+
+// List all berries with pagination
+const berries = await pokedex.listBerries({ limit: 20, offset: 0 });
 ```
 
 ### Items
 ```typescript
 // Get a specific item
-const item = await client.getItem('potion');
+const item = await pokedex.getItem('potion');
+
+// Get item attribute
+const attribute = await pokedex.getItemAttribute('holdable');
 
 // Get item category
-const category = await client.getItemCategory('healing');
+const category = await pokedex.getItemCategory('healing');
 
-// List all items (paginated)
-const items = await client.listItems(20, 0);
+// Get item fling effect
+const flingEffect = await pokedex.getItemFlingEffect('badly-poison');
+
+// Get item pocket
+const pocket = await pokedex.getItemPocket('medicine');
+
+// List all items with pagination
+const items = await pokedex.listItems({ limit: 20, offset: 0 });
 ```
 
 ### Moves
 ```typescript
 // Get a specific move
-const move = await client.getMove('tackle');
+const move = await pokedex.getMove('tackle');
 
 // Get move ailment
-const ailment = await client.getMoveAilment('paralysis');
+const ailment = await pokedex.getMoveAilment('paralysis');
 
-// List all moves (paginated)
-const moves = await client.listMoves(20, 0);
+// Get move battle style
+const battleStyle = await pokedex.getMoveBattleStyle('attack');
+
+// Get move category
+const category = await pokedex.getMoveCategory('damage');
+
+// Get move damage class
+const damageClass = await pokedex.getMoveDamageClass('physical');
+
+// Get move learn method
+const learnMethod = await pokedex.getMoveLearnMethod('level-up');
+
+// Get move target
+const target = await pokedex.getMoveTarget('selected-pokemon');
+
+// List all moves with pagination
+const moves = await pokedex.listMoves({ limit: 20, offset: 0 });
 ```
 
 ### Locations
 ```typescript
 // Get a specific location
-const location = await client.getLocation('canalave-city');
+const location = await pokedex.getLocation('canalave-city');
 
 // Get location area
-const area = await client.getLocationArea('canalave-city-area');
+const area = await pokedex.getLocationArea('canalave-city-area');
 
-// List all locations (paginated)
-const locations = await client.listLocations(20, 0);
-```
+// Get pal park area
+const palParkArea = await pokedex.getPalParkArea('field');
 
-### TypeScript Generic Support
-The SDK leverages TypeScript generics for enhanced type safety when working with collections:
+// Get region
+const region = await pokedex.getRegion('kanto');
 
-```typescript
-// Using generics with pagination
-const berries = await client.list<Berry>('berry', { limit: 20 });
-berries.results.forEach(berry => {
-  // Full type inference for berry properties
-  console.log(berry.firmness);
-});
+// List locations with pagination
+const locations = await pokedex.listLocations({ limit: 20, offset: 0 });
 
-// Strongly-typed search results
-const searchResults = await client.search<Pokemon>('pokemon', 'char');
-searchResults.forEach(pokemon => {
-  // TypeScript knows these are Pokemon objects
-  console.log(pokemon.types);
-});
-```
+// List location areas with pagination
+const areas = await pokedex.listLocationAreas({ limit: 20, offset: 0 });
 
-For more examples and API documentation, visit our [full documentation](https://github.com/superb-owl-dev/poke-api-sdk/docs).
-
-## Example: SDK vs Native API
-
-Here's how our SDK simplifies common operations compared to the native API:
-
-```typescript
-// Native API (without SDK)
-async function getPokemonWithTypes() {
-  // Requires multiple fetch calls
-  const response = await fetch('https://pokeapi.co/api/v2/pokemon/pikachu');
-  const pokemon = await response.json();
-  
-  // Need to fetch each type separately
-  const typePromises = pokemon.types.map(t => fetch(t.type.url).then(r => r.json()));
-  const types = await Promise.all(typePromises);
-}
-
-// With our SDK
-async function getPokemonWithTypes() {
-  const pokemon = await client.getPokemon('pikachu');
-  // Types are already resolved and properly typed!
-  console.log(pokemon.types);
-}
-
-// Native API pagination
-async function getAllPokemon() {
-  let url = 'https://pokeapi.co/api/v2/pokemon';
-  const allPokemon = [];
-  
-  while (url) {
-    const response = await fetch(url);
-    const data = await response.json();
-    allPokemon.push(...data.results);
-    url = data.next;
-  }
-}
-
-// With our SDK
-async function getAllPokemon() {
-  // Automatic pagination handling
-  const pokemon = await client.listPokemon(20, 0);
-  // Results are typed and normalized
-  console.log(pokemon.results);
-}
+// List regions with pagination
+const regions = await pokedex.listRegions({ limit: 20, offset: 0 });
 ```
 
 ## Configuration
@@ -212,7 +188,8 @@ You can configure the client with custom options:
 ```typescript
 const client = new PokeAPIClient({
   baseURL: 'https://pokeapi.co/api/v2', // Default API URL
-  timeout: 10000 // Request timeout in milliseconds
+  timeout: 10000, // Request timeout in milliseconds
+  cacheEnabled: true // Enable/disable caching (enabled by default)
 });
 ```
 
@@ -222,25 +199,16 @@ The SDK throws descriptive errors that can be caught and handled in your applica
 
 ```typescript
 try {
-  const pokemon = await client.getPokemon('nonexistent-pokemon');
+  const pokemon = await pokedex.getPokemon('nonexistent-pokemon');
 } catch (error) {
   if (error.response?.status === 404) {
     console.error('Pokemon not found');
+  } else if (error.code === 'ECONNABORTED') {
+    console.error('Request timed out');
   } else {
     console.error('An error occurred:', error);
   }
 }
-```
-
-## TypeScript Support
-
-The SDK is written in TypeScript and provides comprehensive type definitions for all API responses. This enables excellent IDE support and type safety in your TypeScript projects.
-
-```typescript
-import { Pokemon, Berry, Item } from '@superb-owl-dev/poke-api-sdk';
-
-// All types are properly defined
-const pokemon: Pokemon = await client.getPokemon('pikachu');
 ```
 
 ## Design Decisions
@@ -251,63 +219,49 @@ const pokemon: Pokemon = await client.getPokemon('pikachu');
 - **Comprehensive Types**: All API responses are fully typed according to the official PokéAPI specifications.
 - **Promise-based**: Modern async/await API design for better error handling and code readability.
 
-## Tools Used
-
-- [TypeScript](https://www.typescriptlang.org/) - Primary development language
-- [Axios](https://axios-http.com/) - HTTP client
-- [Jest](https://jestjs.io/) - Testing framework
-- [ESLint](https://eslint.org/) - Code linting
-- [TypeDoc](https://typedoc.org/) - Documentation generation
-- [PokéAPI](https://pokeapi.co/) - Data source
-
 ## Implementation Details
 
 ### Caching Strategy
-The SDK implements caching following PokéAPI's fair use policy. Responses are cached in memory with configurable TTL (Time To Live):
-
-```typescript
-const client = new PokeAPIClient({
-  cache: {
-    ttl: 3600000, // Cache for 1 hour (in milliseconds)
-    maxSize: 1000 // Maximum number of cached items
-  }
-});
-```
+The SDK implements an in-memory caching system with configurable TTL (Time To Live). By default:
+- Cache is enabled with a 1-hour TTL
+- All successful GET requests are cached
+- Cache can be disabled via configuration
+- Cache is automatically invalidated after TTL expires
 
 ### Error Handling Details
-The SDK provides rich error information:
+The SDK provides error handling through the underlying Axios HTTP client:
 
 ```typescript
 try {
-  await client.getPokemon('invalid-name');
+  await pokedex.getPokemon('invalid-name');
 } catch (error) {
-  if (error.code === 'RESOURCE_NOT_FOUND') {
-    // Handle 404 case
-  } else if (error.code === 'NETWORK_ERROR') {
+  if (error.response?.status === 404) {
+    // Handle 404 Not Found
+    console.error('Pokemon not found');
+  } else if (error.code === 'ECONNABORTED') {
+    // Handle timeout
+    console.error('Request timed out');
+  } else if (error.code === 'ERR_NETWORK') {
     // Handle network issues
+    console.error('Network error occurred');
   }
-  // Error objects include:
-  // - code: String error code
+  // Axios error object includes:
+  // - response: The server response if received
+  // - request: The request that generated the error
   // - message: Human-readable error message
-  // - originalError: Original API error (if available)
+  // - code: Error code (e.g. 'ECONNABORTED')
 }
 ```
 
 ### Resource Resolution
-The SDK automatically resolves nested resources up to a configurable depth:
+The SDK provides direct access to the PokeAPI resources through strongly-typed interfaces. Resources like Pokemon contain all their associated data as returned by the API:
 
 ```typescript
-const client = new PokeAPIClient({
-  resolveDepth: 2 // Will resolve nested resources up to 2 levels deep
-});
-
-// This will include resolved type and ability details
-const pokemon = await client.getPokemon('charizard');
+const pokemon = await pokedex.getPokemon('charizard');
+console.log(pokemon.types);     // Array of type information
+console.log(pokemon.abilities); // Array of ability information
+console.log(pokemon.stats);     // Array of base stats
 ```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 

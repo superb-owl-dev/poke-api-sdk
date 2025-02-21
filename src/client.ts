@@ -4,11 +4,18 @@ import { Berry, BerryFirmness, BerryFlavor } from './types/berries';
 import { Item, ItemAttribute, ItemCategory, ItemFlingEffect, ItemPocket } from './types/items';
 import { Move, MoveAilment, MoveBattleStyle, MoveCategory, MoveDamageClass, MoveLearnMethod, MoveTarget } from './types/moves';
 import { Location, LocationArea, PalParkArea, Region } from './types/locations';
+import { Generation } from './types/machines';  // Add Generation import
 
 export interface PokeAPIClientConfig {
     baseURL?: string;
     timeout?: number;
     cacheEnabled?: boolean; // Added this option
+}
+
+export interface PaginationOptions {
+    limit?: number;
+    offset?: number;
+    fetchAll?: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -45,7 +52,29 @@ export class PokeAPIClient {
         this.cacheEnabled = config.cacheEnabled ?? true;
     }
 
-    protected async get<T>(path: string, params?: Record<string, string | number>): Promise<T> {
+    protected async get<T>(path: string, params?: Record<string, string | number | boolean>): Promise<T> {
+        // Handle fetchAll pagination if specified
+        if (params?.fetchAll) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { fetchAll, ...restParams } = params;
+            const firstPage = await this.get<PaginatedResponse<T>>(path, { ...restParams, limit: 100, offset: 0 });
+            const allResults: T[] = [...firstPage.results];
+            
+            let nextOffset = 100;
+            while (nextOffset < firstPage.count) {
+                const nextPage = await this.get<PaginatedResponse<T>>(path, { ...restParams, limit: 100, offset: nextOffset });
+                allResults.push(...nextPage.results);
+                nextOffset += 100;
+            }
+            
+            return {
+                count: firstPage.count,
+                next: null,
+                previous: null,
+                results: allResults
+            } as T;
+        }
+
         const cacheKey = `${path}${params ? JSON.stringify(params) : ''}`;
         
         // Check cache if enabled
@@ -87,11 +116,11 @@ export class PokeAPIClient {
 
     /**
      * Get a paginated list of Pokemon
-     * @param limit - Number of results per page
-     * @param offset - Number of results to skip
+     * @param options - Pagination options
      */
-    public async listPokemon(limit = 20, offset = 0): Promise<PaginatedResponse<NamedAPIResource>> {
-        return this.get('/pokemon', { limit, offset });
+    public async listPokemon(options: PaginationOptions = {}): Promise<PaginatedResponse<NamedAPIResource>> {
+        const { limit = 20, offset = 0, fetchAll = false } = options;
+        return this.get('/pokemon', { limit, offset, fetchAll });
     }
 
     /**
@@ -105,7 +134,7 @@ export class PokeAPIClient {
             return [pokemon];
         } catch {
             // If exact match fails, try partial match
-            const response = await this.listPokemon(100, 0);
+            const response = await this.listPokemon({ limit: 100, offset: 0 });
             const matches = response.results.filter((p: NamedAPIResource) => 
                 p.name.toLowerCase().includes(searchTerm.toLowerCase())
             );
@@ -145,11 +174,11 @@ export class PokeAPIClient {
 
     /**
      * Get a paginated list of Berries
-     * @param limit - Number of results per page
-     * @param offset - Number of results to skip
+     * @param options - Pagination options
      */
-    public async listBerries(limit = 20, offset = 0): Promise<PaginatedResponse<NamedAPIResource>> {
-        return this.get('/berry', { limit, offset });
+    public async listBerries(options: PaginationOptions = {}): Promise<PaginatedResponse<NamedAPIResource>> {
+        const { limit = 20, offset = 0, fetchAll = false } = options;
+        return this.get('/berry', { limit, offset, fetchAll });
     }
 
     // Item endpoints
@@ -195,11 +224,11 @@ export class PokeAPIClient {
 
     /**
      * Get a paginated list of Items
-     * @param limit - Number of results per page
-     * @param offset - Number of results to skip
+     * @param options - Pagination options
      */
-    public async listItems(limit = 20, offset = 0): Promise<PaginatedResponse<NamedAPIResource>> {
-        return this.get('/item', { limit, offset });
+    public async listItems(options: PaginationOptions = {}): Promise<PaginatedResponse<NamedAPIResource>> {
+        const { limit = 20, offset = 0, fetchAll = false } = options;
+        return this.get('/item', { limit, offset, fetchAll });
     }
 
     // Move endpoints
@@ -261,11 +290,11 @@ export class PokeAPIClient {
 
     /**
      * Get a paginated list of Moves
-     * @param limit - Number of results per page
-     * @param offset - Number of results to skip
+     * @param options - Pagination options
      */
-    public async listMoves(limit = 20, offset = 0): Promise<PaginatedResponse<NamedAPIResource>> {
-        return this.get('/move', { limit, offset });
+    public async listMoves(options: PaginationOptions = {}): Promise<PaginatedResponse<NamedAPIResource>> {
+        const { limit = 20, offset = 0, fetchAll = false } = options;
+        return this.get('/move', { limit, offset, fetchAll });
     }
 
     // Location endpoints
@@ -303,28 +332,58 @@ export class PokeAPIClient {
 
     /**
      * Get a paginated list of Locations
-     * @param limit - Number of results per page
-     * @param offset - Number of results to skip
+     * @param options - Pagination options
      */
-    public async listLocations(limit = 20, offset = 0): Promise<PaginatedResponse<NamedAPIResource>> {
-        return this.get('/location', { limit, offset });
+    public async listLocations(options: PaginationOptions = {}): Promise<PaginatedResponse<NamedAPIResource>> {
+        const { limit = 20, offset = 0, fetchAll = false } = options;
+        return this.get('/location', { limit, offset, fetchAll });
     }
 
     /**
      * Get a paginated list of Location Areas
-     * @param limit - Number of results per page
-     * @param offset - Number of results to skip
+     * @param options - Pagination options
      */
-    public async listLocationAreas(limit = 20, offset = 0): Promise<PaginatedResponse<NamedAPIResource>> {
-        return this.get('/location-area', { limit, offset });
+    public async listLocationAreas(options: PaginationOptions = {}): Promise<PaginatedResponse<NamedAPIResource>> {
+        const { limit = 20, offset = 0, fetchAll = false } = options;
+        return this.get('/location-area', { limit, offset, fetchAll });
     }
 
     /**
      * Get a paginated list of Regions
-     * @param limit - Number of results per page
-     * @param offset - Number of results to skip
+     * @param options - Pagination options
      */
-    public async listRegions(limit = 20, offset = 0): Promise<PaginatedResponse<NamedAPIResource>> {
-        return this.get('/region', { limit, offset });
+    public async listRegions(options: PaginationOptions = {}): Promise<PaginatedResponse<NamedAPIResource>> {
+        const { limit = 20, offset = 0, fetchAll = false } = options;
+        return this.get('/region', { limit, offset, fetchAll });
+    }
+
+    // Generation endpoints
+    /**
+     * Get a Generation by name or ID
+     * @param nameOrId - The name or ID of the Generation
+     */
+    public async getGeneration(nameOrId: string | number): Promise<Generation> {
+        return this.get<Generation>(`/generation/${nameOrId}`);
+    }
+
+    /**
+     * Get all Pokemon from a specific Generation
+     * @param nameOrId - The name or ID of the Generation
+     */
+    public async getPokemonsByGeneration(nameOrId: string | number): Promise<Pokemon[]> {
+        const generation = await this.getGeneration(nameOrId);
+        const pokemonPromises = generation.pokemon_species.map((species: NamedAPIResource) => 
+            this.getPokemon(species.name)
+        );
+        return Promise.all(pokemonPromises);
+    }
+
+    /**
+     * Get a paginated list of Generations
+     * @param options - Pagination options
+     */
+    public async listGenerations(options: PaginationOptions = {}): Promise<PaginatedResponse<NamedAPIResource>> {
+        const { limit = 20, offset = 0, fetchAll = false } = options;
+        return this.get('/generation', { limit, offset, fetchAll });
     }
 }
